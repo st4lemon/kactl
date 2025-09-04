@@ -1,91 +1,78 @@
 /**
- * Author: Stanford
+ * Author: Benq
  * Date: Unknown
- * Source: Stanford Notebook
- * Description: Min-cost max-flow.
- *  If costs can be negative, call setpi before maxflow, but note that negative cost cycles are not supported.
- *  To obtain the actual flow, look at positive values only.
- * Status: Tested on kattis:mincostmaxflow, stress-tested against another implementation
- * Time: $O(F E \log(V))$ where F is max flow. $O(VE)$ for setpi.
+ * Source: Benq Notebook
+ * Description: Minimum-cost maximum flow, assumes no negative cycles. 
+ 	* It is possible to choose negative edge costs such that the first 
+ 	* run of Dijkstra is slow, but this hasn't been an issue in the past. 
+ 	* Edge weights $\ge 0$ for every subsequent run. To get flow through 
+ 	* original edges, assign ID's during \texttt{ae}.
+ * Status: Tested on CSES
+ * Time: Ignoring first run of Dijkstra, $O(FM\log M)$ 
+ 	* if caps are integers and $F$ is max flow.
  */
 #pragma once
 
-// #include <bits/extc++.h> /// include-line, keep-include
-
-const ll INF = numeric_limits<ll>::max() / 4;
-
-struct MCMF {
-	struct edge {
-		int from, to, rev;
-		ll cap, cost, flow;
-	};
-	int N;
-	vector<vector<edge>> ed;
-	vi seen;
-	vector<ll> dist, pi;
-	vector<edge*> par;
-
-	MCMF(int N) : N(N), ed(N), seen(N), dist(N), pi(N), par(N) {}
-
-	void addEdge(int from, int to, ll cap, ll cost) {
-		if (from == to) return;
-		ed[from].push_back(edge{ from,to,sz(ed[to]),cap,cost,0 });
-		ed[to].push_back(edge{ to,from,sz(ed[from])-1,0,-cost,0 });
+struct MCMF { 
+	using F = ll; using C = ll; // flow type, cost type
+	struct Edge { int to; F flo, cap; C cost; };
+	bool ckmin (C &x, C y) { 
+		if (x <= y) return 0;
+		else { x = y; return 1; }
 	}
-
-	void path(int s) {
-		fill(all(seen), 0);
-		fill(all(dist), INF);
-		dist[s] = 0; ll di;
-
-		__gnu_pbds::priority_queue<pair<ll, int>> q;
-		vector<decltype(q)::point_iterator> its(N);
-		q.push({ 0, s });
-
-		while (!q.empty()) {
-			s = q.top().second; q.pop();
-			seen[s] = 1; di = dist[s] + pi[s];
-			for (edge& e : ed[s]) if (!seen[e.to]) {
-				ll val = di - pi[e.to] + e.cost;
-				if (e.cap - e.flow > 0 && val < dist[e.to]) {
-					dist[e.to] = val;
-					par[e.to] = &e;
-					if (its[e.to] == q.end())
-						its[e.to] = q.push({ -dist[e.to], e.to });
-					else
-						q.modify(its[e.to], { -dist[e.to], e.to });
+	int N; vector<C> p, dist; 
+	vi pre; vector<Edge> eds; vector<vi> adj;
+	void init(int _N) { 
+		N = _N; p.resize(N);
+		dist.resize(N), pre.resize(N), adj.resize(N); 
+	}
+	void ae(int u, int v, F cap, C cost) { 
+		assert(cap >= 0); 
+		adj[u].push_back(sz(eds)); 
+		eds.push_back({v,0,cap,cost}); 
+		adj[v].push_back(sz(eds)); 
+		eds.push_back({u,0,0,-cost});
+	} // use asserts, don't try smth dumb
+	bool path(int s, int t) { // find lowest cost path to send flow through
+		const C inf = numeric_limits<C>::max();
+		rep(i,0,N) dist[i] = inf;
+		using T = pair<C,int>; 
+		priority_queue<T,vector<T>,greater<T>> todo; 
+		todo.push({dist[s] = 0,s}); 
+		while (sz(todo)) { // Dijkstra
+			T x = todo.top(); todo.pop(); if (x.first > dist[x.second]) continue;
+			for(auto &e : adj[x.second]) { 
+				const Edge& E = eds[e]; // all weights should be non-negative
+				if (E.flo < E.cap && ckmin(dist[E.to],x.first+E.cost+p[x.second]-p[E.to]))
+				{
+					pre[E.to] = e, todo.push({dist[E.to],E.to});
 				}
 			}
-		}
-		rep(i,0,N) pi[i] = min(pi[i] + dist[i], INF);
+		} // if costs are doubles, add some EPS so you 
+		// don't traverse ~0-weight cycle repeatedly
+		return dist[t] != inf; // return flow
 	}
-
-	pair<ll, ll> maxflow(int s, int t) {
-		ll totflow = 0, totcost = 0;
-		while (path(s), seen[t]) {
-			ll fl = INF;
-			for (edge* x = par[t]; x; x = par[x->from])
-				fl = min(fl, x->cap - x->flow);
-
-			totflow += fl;
-			for (edge* x = par[t]; x; x = par[x->from]) {
-				x->flow += fl;
-				ed[x->to][x->rev].flow -= fl;
+	pair<F,C> calc(int s, int t) { 
+		assert(s != t);
+		rep(_,0,N) rep(e,0,sz(eds)) { 
+			const Edge& E = eds[e]; // Bellman-Ford
+			if (E.cap) ckmin(p[E.to],p[eds[e^1].to]+E.cost); 
+		}
+		F totFlow = 0; C totCost = 0;
+		while (path(s,t)) { // p -> potentials for Dijkstra
+			rep(i,0,N) p[i] += dist[i]; // don't matter for unreachable nodes
+			F df = numeric_limits<F>::max();
+			for (int x = t; x != s; x = eds[pre[x]^1].to) 
+			{
+				const Edge& E = eds[pre[x]]; ckmin(df,E.cap-E.flo); 
 			}
-		}
-		rep(i,0,N) for(edge& e : ed[i]) totcost += e.cost * e.flow;
-		return {totflow, totcost/2};
-	}
-
-	// If some costs can be negative, call this before maxflow:
-	void setpi(int s) { // (otherwise, leave this out)
-		fill(all(pi), INF); pi[s] = 0;
-		int it = N, ch = 1; ll v;
-		while (ch-- && it--)
-			rep(i,0,N) if (pi[i] != INF)
-			  for (edge& e : ed[i]) if (e.cap)
-				  if ((v = pi[i] + e.cost) < pi[e.to])
-					  pi[e.to] = v, ch = 1;
-		assert(it >= 0); // negative cost cycle
+			totFlow += df; totCost += (p[t]-p[s])*df;
+			for (int x = t; x != s; x = eds[pre[x]^1].to)
+			{
+				eds[pre[x]].flo += df, eds[pre[x]^1].flo -= df;
+			}
+		} // get max flow you can send along path
+		return {totFlow,totCost};
 	}
 };
+
