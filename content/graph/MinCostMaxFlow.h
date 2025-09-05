@@ -75,4 +75,3 @@ struct MCMF {
 		return {totFlow,totCost};
 	}
 };
-
