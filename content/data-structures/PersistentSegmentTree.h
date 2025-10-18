@@ -4,7 +4,7 @@
  * Source: folklore
  * Description: Point update, range query
  * Update segment tree at different times up to MAXN. Fill array a before building the structure.
- * Usage: Perstree t(); t[0].build(0,MAXN-1);
+ * Usage: Perstree t(); t.t[0] = build(0,MAXN-1);
  * Time: $O(\log(N))$
  * Status: Tested on CSES
  */
