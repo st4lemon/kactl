@@ -10,7 +10,7 @@
  
 bitset<MAXK> dp;
 dp[0] = 1;
-for (int i = 0; i < k; i++) {
+rep(i,0,k) {
 	for (int x = 0; (1<<x) <= m[i]; x++) {
 		dp |= (dp << (a[i]*(1<<x)));
 		m[i] -= (1<<x);

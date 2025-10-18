@@ -42,7 +42,7 @@ struct PersTree
 			return new Node(a[cl]);
 		}
 		int cm = (cl + cr)/2;
-		return new Node(build(cl, cm), build(cm + 1, cr));
+		return new Node(build(cl,cm), build(cm+1,cr));
 	}
 	Node* update (int x, int v, int cl, int cr, Node* p) {
 		if (cl == cr) {
@@ -50,9 +50,9 @@ struct PersTree
 		}
 		int cm = (cl + cr)/2;
 		if (x <= cm) {
-			return new Node(update(x, v, cl, cm, p->l), p->r);
+			return new Node(update(x,v,cl,cm,p->l),p->r);
 		} else {
-			return new Node(p->l, update(x, v, cm + 1, cr, p->r));
+			return new Node(p->l, update(x,v,cm+1,cr,p->r));
 		}
 	}
 	ll query (int l, int r, int cl, int cr, Node* p) {
@@ -63,13 +63,13 @@ struct PersTree
 			return p->v;
 		}
 		int cm = (cl + cr)/2;
-		return query(l, r, cl, cm, p->l) + query(l, r, cm + 1, cr, p->r);
+		return query(l,r,cl,cm,p->l) + query(l,r,cm+1,cr,p->r);
 	} 
 	void upd (int p, int v, int k) {
-		t[k] = update(p, v, 0, MAXN - 1, t[k]);
+		t[k] = update(p,v,0,MAXN-1,t[k]);
 	}
 	ll que (int l, int r, int k) {
-		return query(l, r, 0, MAXN - 1, t[k]);
+		return query(l,r,0,MAXN-1,t[k]);
 	}
 };
 
