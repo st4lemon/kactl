@@ -19,6 +19,7 @@ struct Point {
 	bool operator==(P p) const { return tie(x,y)==tie(p.x,p.y); }
 	P operator+(P p) const { return P(x+p.x, y+p.y); }
 	P operator-(P p) const { return P(x-p.x, y-p.y); }
+	P operator-() const { return P(-x, -y); }
 	P operator*(T d) const { return P(x*d, y*d); }
 	P operator/(T d) const { return P(x/d, y/d); }
 	T dot(P p) const { return x*p.x + y*p.y; }
@@ -36,4 +37,7 @@ struct Point {
 		return P(x*cos(a)-y*sin(a),x*sin(a)+y*cos(a)); }
 	friend ostream& operator<<(ostream& os, P p) {
 		return os << "(" << p.x << "," << p.y << ")"; }
+	static T cross(P a, P b, P c) {
+		return (b-a).cross(c-a);
+	}
 };
