@@ -15,6 +15,7 @@ struct Point {
 	typedef Point P;
 	T x, y;
 	explicit Point(T x=0, T y=0) : x(x), y(y) {}
+	// sort by x-coordinate
 	bool operator<(P p) const { return tie(x,y) < tie(p.x,p.y); }
 	bool operator==(P p) const { return tie(x,y)==tie(p.x,p.y); }
 	P operator+(P p) const { return P(x+p.x, y+p.y); }
@@ -37,6 +38,8 @@ struct Point {
 		return P(x*cos(a)-y*sin(a),x*sin(a)+y*cos(a)); }
 	friend ostream& operator<<(ostream& os, P p) {
 		return os << "(" << p.x << "," << p.y << ")"; }
+  friend istream& operator>>(istream& is, P& p) {
+    return is >> p.x >> p.y; }
 	static T cross(P a, P b, P c) {
 		return (b-a).cross(c-a);
 	}
