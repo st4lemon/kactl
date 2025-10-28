@@ -6,7 +6,7 @@
  * Description:
 \\\begin{minipage}{75mm}
 Maintains a decremental convex hull with $O(\log^2 n)$ per deletion.
-$O(\log n)$ is possible with fractional cascading. 
+$O(\log n)$ is possible with a different algorithm.  
 \end{minipage}
 \begin{minipage}{15mm}
 \vspace{-6mm}
@@ -14,7 +14,7 @@ $O(\log n)$ is possible with fractional cascading.
 \vspace{-6mm}
 \end{minipage}
  * Time: O(n \log^2 n)
- * Status: not tested 
+ * Status: verified on https://judge.yosupo.jp/submission/323945
 */
 #pragma once
 
@@ -24,27 +24,27 @@ typedef Point<ll> P;
 class LeftHull{
   vector<P> p;
   struct Node{
-    int bl,br;
-    int L,R;
-    int lc,rc;
+    int bl,br; // left/right n-index of bridge
+    int L,R; // left/right n-index 
+    int lc,rc; // left/right child
   };
   vector<Node> n;
   int root;
   bool isleaf(int w){
     return n[w].lc==-1&&n[w].rc==-1;
   }
-  void pull(int w){
+  void pull(int w){ // get bridge from subtrees
     assert(!isleaf(w));
-    int l=n[w].lc,r=n[w].rc;
-    ll sy=p[n[r].L].y;
+    int l=n[w].lc,r=n[w].rc; // get children
+    ll sy=p[n[r].L].y; // y-pos of right child left node
     while(!isleaf(l)||!isleaf(r)){
       int a=n[l].bl,b=n[l].br,
-	  c=n[r].bl,d=n[r].br;
+	      c=n[r].bl,d=n[r].br; 
       if(a!=b && P::cross(p[a],p[b],p[c])>0) l=n[l].lc;
       else if(c!=d && P::cross(p[b],p[c],p[d])>0) r=n[r].rc;
       else if(a==b) r=n[r].lc;
       else if(c==d) l=n[l].rc;
-      else{
+      else{ // 
         ll j=P::cross(p[a],p[b],p[c]);
         ll k=P::cross(p[b],p[a],p[d]);
         assert(j+k>=0);
@@ -55,13 +55,14 @@ class LeftHull{
     n[w].bl=n[l].L;
     n[w].br=n[r].L;
   }
-  void build(int w,int L,int R){
+  // build n[w] = subtree [L, R-1]
+  void build(int w,int L,int R){ 
     n[w].L=L;
     n[w].R=R;
-    if(R-L==1){
+    if(R-L==1){ // if size 1:
       n[w].lc=n[w].rc=-1;
       n[w].bl=n[w].br=L;
-    }else{
+    }else{ // create subtrees
       int M=(L+R)/2;
       n[w].lc=w+1;
       n[w].rc=w+2*(M-L);
@@ -70,20 +71,20 @@ class LeftHull{
       pull(w);
     }
   }
-  int erase(int w,int L,int R){
-    if(R<=n[w].L||L>=n[w].R) return w;
-    if(L<=n[w].L&&R>=n[w].R) return -1;
-    n[w].lc=erase(n[w].lc,L,R);
-    n[w].rc=erase(n[w].rc,L,R);
-    if(n[w].lc==-1) return n[w].rc;
+  int erase(int w,int L,int R){ // supports range deletions??
+    if(R<=n[w].L||L>=n[w].R) return w; // out of range
+    if(L<=n[w].L&&R>=n[w].R) return -1; // found leaf
+    n[w].lc=erase(n[w].lc,L,R); // recurse
+    n[w].rc=erase(n[w].rc,L,R); // recurse
+    if(n[w].lc==-1) return n[w].rc; // empty subtree
     if(n[w].rc==-1) return n[w].lc;
-    pull(w);
+    pull(w); // otherwise recompute bridge
     return w;
   }
   //only works for whole hull
   void get_hull(int w,int l,int r,vi& res){
-    if(isleaf(w)) res.push_back(n[w].L);
-    else if(r<=n[w].bl) get_hull(n[w].lc,l,r,res);
+    if(isleaf(w)) res.push_back(n[w].L); 
+    else if(r<=n[w].bl) get_hull(n[w].lc,l,r,res); 
     else if(l>=n[w].br) get_hull(n[w].rc,l,r,res);
     else{
       assert(l<=n[w].bl&&n[w].br<=r);
