@@ -10,56 +10,42 @@
  */
 #pragma once
 
-typedef array<ll, 3> at;
 struct LiChao {
-	const int INF = 1e9 + 7;
-	int n;
-	vector<pii> t;
-	LiChao (int _n) {
-		n = _n;
-		t = vector<pii> (2 * n, {-INF,-INF});
-	}
-	void add (int l, int r, int x, int y, int cl = 0, int cr = MAXN - 1, int p = 1) {
-		if (cr < l || cl > r) {
-			return;
-		}
-		int cm = (cl + cr)/2;
-		if (l <= cl && cr <= r) {
-			at pv = {cl,cm,cr};
-			at cv = {cl,cm,cr};
-			for (int i = 0; i < 3; i++) {
-				pv[i] *= t[p].first, pv[i] += t[p].second;
-				cv[i] *= x, cv[i] += y;
-			}
-			if (pv[0] <= cv[0] && pv[2] <= cv[2]) {
-				t[p] = {x,y};
-				return;
-			} else if (pv[0] >= cv[0] && pv[2] >= cv[2]) {
-				return;
-			} else {
-				add(l,r,x,y,cl,cm,p*2);
-				add(l,r,x,y,cm+1,cr,p*2+1);
-			}
-			return;
-		}
-		add(l,r,x,y,cl,cm,p*2);
-		add(l,r,x,y,cm+1,cr,p*2+1);
-	}
-	ll query (int x, int cl = 0, int cr = MAXN - 1, int p = 1) {
-		ll cc = 0;
-		if (t[p].first == -INF && t[p].second == -INF) {
-			cc = -1ll * INF * INF;
-		} else {
-			cc = 1ll * t[p].first * x + t[p].second;
-		}
-		if (cl == cr) {
-			return cc;
-		}
-		int cm = (cl + cr)/2;
-		if (x <= cm) {
-			return max(cc, query(x,cl,cm,p*2));
-		} else {
-			return max(cc, query(x,cm+1,cr,p*2+1));
-		}
-	} 
+    struct Line {
+        ll a,b; // a*x+b
+        ll get(ll x) { return a*x+b; }
+    };
+    ll n;
+    static const ll INF = 1e18;
+    vector<Line> t;
+    vector<pair<ll, ll>> v;
+    LiChao(ll _n) : n(_n), t(2*n, {0, -INF}), v(2*n) { build(); }
+    void build() {
+        for(ll i=0; i<n; i++) v[i+n] = {i,i+1};
+        for(ll i=n-1; i>0; i--) v[i] = {v[2*i].first,v[2*i+1].second};
+    }
+    void add(Line l, ll L, ll R) {
+        for (L+=n, R+=n; L<R; L/=2, R/=2) {
+            if (L%2) add(l, L++);
+            if (R%2) add(l, --R);
+        }
+    }
+    void add(Line l, ll i) {
+        if (i >= 2*n) return;
+        auto [lo, hi] = v[i];
+        ll m = (lo+hi)/2;
+        if (t[i].get(m) < l.get(m)) swap(l, t[i]);
+        if (t[i].a < l.a) {
+            add(l, 2*i+1);
+        } else {
+            add(l, 2*i);
+        }
+    }
+    ll q(ll x) {
+        ll ans = -INF;
+        for (ll i=x+n; i; i/=2) {
+            ans = max(ans, t[i].get(x));
+        }
+        return ans;
+    }
 };
