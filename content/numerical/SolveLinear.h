@@ -4,6 +4,9 @@
  * License: CC0
  * Description: Solves $A * x = b$. If there are multiple solutions, an arbitrary one is returned.
  *  Returns rank, or -1 if no solutions. Data in $A$ and $b$ is lost.
+ * To solve in $\mathbb{F}_p,$ set br and bc to -1 initially and instead of choosing the maximum as a pivot choose any nonzero number.
+ * A pivot does not exist if br == -1 (as opposed to bv <= eps). Set bv to A[r][c] when choosing the pivot, and remove v.
+ * Replace arithmetic operations with their modular analogues.
  * Time: O(n^2 m)
  * Status: tested on kattis:equationsolver, and bruteforce-tested mod 3 and 5 for n,m <= 3
  */
