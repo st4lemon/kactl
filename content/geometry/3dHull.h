@@ -23,6 +23,15 @@ struct PR {
 
 struct F { P3 q; int a, b, c; };
 
+P3 toEqn(const F f, const vector<P3>& A) { 
+	auto& p = A[f.a], &q = f.q;
+    return P3(
+        -q.x/q.z,
+        -q.y/q.z,
+        q.dot(p)/q.z
+	);
+}
+
 vector<F> hull3d(const vector<P3>& A) {
 	assert(sz(A) >= 4);
 	vector<vector<PR>> E(sz(A), vector<PR>(sz(A), {-1, -1}));
