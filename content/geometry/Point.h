@@ -43,4 +43,10 @@ struct Point {
 	static T cross(P a, P b, P c) {
 		return (b-a).cross(c-a);
 	}
+	bool acmp(P& x,P& y) const { // sort by angle w/o atan2
+#define f(z) z.y==0?1+sgn(z.x):2+sgn(z.y)
+		int p1=f(x),p2=f(y);
+		if(p1!=p2)return p1<p2;
+		return cross(x,y)>0;
+	}
 };
